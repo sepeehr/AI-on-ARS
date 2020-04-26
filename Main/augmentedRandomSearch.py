@@ -2,7 +2,7 @@
 """
 Created on Sun Apr 19 21:50:57 2020
 
-@author: sepehr mohseni
+@developer: sepehr mohseni
 """
 
 import numpy
