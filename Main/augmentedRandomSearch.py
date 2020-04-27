@@ -14,19 +14,20 @@ import os
 
 class HyperParameters():
     
-    #these are the best values after several tests, if you are unhappy with results, change episodes and learning rate.
+    #these are the best values after several tests, if you are unhappy with results, change episode and learn values.
     def __init__(self):
-        self.nb_steps = 1000
-        self.episode_length = 1000
-        self.learning_rate = 0.02
-        self.nb_directions = 16
-        self.nb_best_directions = 16
-        assert self.nb_best_directions <= self.nb_directions
-        self.noise = 0.03
+        self.steps = 1000
+        self.episode = 1000
+        self.learn = 0.02
+        self.noise = 0.35
         self.seed = 1
-        self.env_name = 'HalfCheetahBulletEnv-v0'
-        #self.env_name = 'Pendulum-v0'
-        #self.env_name = 'HopperBulletEnv-v0'
+        self.directions = 60
+        self.best = 16
+        assert self.best <= self.directions
+ 
+        self.environment = 'HalfCheetahBulletEnv-v0'
+        #self.environment = 'Pendulum-v0'
+        #self.environment = 'HopperBulletEnv-v0'
         
 
 #implementing section 3.2 of original article
@@ -71,7 +72,7 @@ class AI():
     
     def sample_perturbation(self):
         return [numpy.random.randn(*self.theta.shape) 
-                for i in range(hyperparams.nb_directions)]
+                for i in range(hyperparams.directions)]
         
     #step 7 of section 3
     def update(self, rollouts, sigma_r):
@@ -81,7 +82,7 @@ class AI():
         for r_positives, r_negatives, d in rollouts:
             step += (r_positives - r_negatives) * d
         
-        self.theta += hyperparams.learning_rate / (hyperparams.nb_best_directions * sigma_r) * step
+        self.theta += hyperparams.learn / (hyperparams.best * sigma_r) * step
         
         
 def explore(env, normaliser, ai, direction = None, delta = None):
@@ -90,7 +91,7 @@ def explore(env, normaliser, ai, direction = None, delta = None):
     num_of_plays = 0.
     sum_rewards = 0
     
-    while done != True and num_of_plays < hyperparams.episode_length:
+    while done != True and num_of_plays < hyperparams.episode:
         normaliser.observe(state)
         state = normaliser.normalise(state)
         action = ai.evaluate(state, delta, direction)
@@ -105,15 +106,15 @@ def explore(env, normaliser, ai, direction = None, delta = None):
 #training brain. step 3 of section 3 of article
 def train(env, ai, normaliser, hyperparams):
     
-    for step in range(hyperparams.nb_steps):
+    for step in range(hyperparams.steps):
         deltas = ai.sample_perturbation()
-        positive_rewards = [0] * hyperparams.nb_directions
-        negative_rewards = [0] * hyperparams.nb_directions
+        positive_rewards = [0] * hyperparams.directions
+        negative_rewards = [0] * hyperparams.directions
         
-        for k in range(hyperparams.nb_directions):
+        for k in range(hyperparams.directions):
             positive_rewards[k] = explore(env, normaliser, ai, direction = "positive", delta = deltas[k])
           
-        for k in range(hyperparams.nb_directions):
+        for k in range(hyperparams.directions):
             negative_rewards[k] = explore(env, normaliser, ai, direction = "negative", delta = deltas[k])
     
         all_rewards_list = numpy.array(positive_rewards + negative_rewards)
@@ -121,7 +122,7 @@ def train(env, ai, normaliser, hyperparams):
         
         #step 6
         scores = {k:max(r_pos, r_neg) for k,(r_pos, r_neg) in enumerate(zip(positive_rewards, negative_rewards))}
-        order = sorted(scores.keys(), key = lambda x:scores[x])[0:hyperparams.nb_best_directions]
+        order = sorted(scores.keys(), key = lambda x:scores[x])[0:hyperparams.best]
         rollouts = [(positive_rewards[k], negative_rewards[k], deltas[k]) for k in order]
         
         #updating AI
@@ -147,7 +148,7 @@ watching_dir = mkdir(work_dir, 'watching')
 
 hyperparams = HyperParameters()
 numpy.random.seed(hyperparams.seed)
-env = gym.make(hyperparams.env_name)
+env = gym.make(hyperparams.environment)
 
 env = wrappers.Monitor(env, watching_dir, force = True)
 
