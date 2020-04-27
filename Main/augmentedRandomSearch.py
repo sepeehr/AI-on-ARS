@@ -16,8 +16,8 @@ class HyperParameters():
     
     #these are the best values after several tests, if you are unhappy with results, change episode and learn values.
     def __init__(self):
-        self.steps = 1000
-        self.episode = 1000
+        self.steps = 3000
+        self.episode = 3000
         self.learn = 0.02
         self.noise = 0.35
         self.seed = 1
