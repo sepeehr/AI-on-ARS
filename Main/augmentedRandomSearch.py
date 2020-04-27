@@ -21,7 +21,7 @@ class HyperParameters():
         self.learn = 0.02
         self.noise = 0.35
         self.seed = 1
-        self.directions = 60
+        self.directions = 16
         self.best = 16
         assert self.best <= self.directions
  
